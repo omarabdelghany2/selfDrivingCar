@@ -1,0 +1,111 @@
+           %.........Bewely Lattice basic code V0.4 three junction..................% 
+clc
+clear all
+global i1 i2 i3 A B vr1 vt1 vr2 vt2 vr3 vt3 td T;
+            %........variable declarations...........................%
+Vi = 0.5 ;%input('enter the incident voltage in kV ');          %......incident kilo-volt.................%
+%u = input('enter the propogation velociety in m/us ');    %..propogation speed in m/us..............%
+n = input('enter the number of line sections ');   %..line section counter container.........%
+
+%..Variable sections ...%
+for i= 1:n
+z(i)=input([' enter surge empedence of lines ' num2str(i) ' ']);
+end
+
+
+for i = 1:(n-1)
+ A(1,i) = (z(i+1)-z(i))/(z(i+1)+z(i));  %... Reflection factor of wave from section i to i+1 ....%
+ A(2,i) = (z(i)-z(i+1))/(z(i+1)+z(i));  %... Reflection factor of wave from section i+1 to i ....%
+ %you can delet this section%
+ B(1,i)=A(1,i)+1;       %... Transmission factor of wave from section i to i+1 ....%                
+ B(2,i)=A(2,i)+1;   %... Transmission factor of wave from section i+1 to i ....% 
+ 
+end
+
+
+            %...................basic calculation..............................%
+             
+for i = 2 : (n-1)
+   d(i)= input([' enter Distance of lines ' num2str(i) ' ']);
+   u(i) = input([' enter speed of lines ' num2str(i) ' ']);
+   td(i) = d(i)/u(i);
+end
+           %voltage calculations %
+vt1(1,1)= Vi * A(1,1);   %reflected voltage from incident wave %       
+vr1(1,1)= Vi * B(1,1);  %Transmitted voltage from incident wave %  
+vt1(1,2)=0;
+vr1(1,2)=0;
+T = input('enter the simulation time in micro-second');
+i1=1;
+i2=1;
+i3=1;
+L2(vr1(1,1),0);
+
+function R1(v,t)
+global i1 i2 i3 A B vr1 vt1 vr2 vt2 vr3 vt3 td T;
+tNext = t + td(2);
+  if tNext <= T
+    i1 = i1 + 1;
+    vr1(i1,1)=v*A(2,1);
+    vt1(i1,1)=v*B(2,1);
+    vr1(i1,2)= tNext;
+    vt1(i1,2)=tNext ;
+    L2(vr1(i1,1),tNext);
+  else
+      return
+  end
+end
+
+function  L2(v,t)
+global i1 i2 i3 A B vr1 vt1 vr2 vt2 vr3 vt3 td T;
+tNext = t + td(2);
+
+    if tNext <= T
+    i2 = i2 + 1; 
+    in = i2;
+    vr2(i2,1)=v*A(1,2);
+    vt2(i2,1)=v*B(1,2);
+    vr2(i2,2)=tNext;
+    vt2(i2,2)=tNext;
+    R1(vr2(i2,1),tNext);
+    
+    L3(vt2(in,1),tNext);
+    else
+      return
+    end
+
+
+end
+
+function R2(v,t)
+global i1 i2 i3 A B vr1 vt1 vr2 vt2 vr3 vt3 td T;
+tNext=t + td(3);
+  if tNext <= T
+    i2 = i2 + 1; 
+    in = i2;
+    vr2(i2,1)=v*A(2,2);
+    vt2(i2,1)=v*B(2,2);
+    vr2(i2,2)= tNext ;
+    vt2(i2,2)= tNext ;
+    L3(vr2(i2,1),tNext);
+    R1(vt2(in,1),tNext);
+  else
+      return
+  end
+end
+
+function  L3(v,t)
+global i1 i2 i3 A B vr1 vt1 vr2 vt2 vr3 vt3 td T;
+tNext = t + td(3);
+if tNext <= T
+    i3 = i3 + 1; 
+    vr3(i3,1)=v*A(1,3);
+    vt3(i3,1)=v*B(1,3);
+    vr3(i3,2)= tNext ;
+    vt3(i3,2)= tNext ;
+    R2(vr3(i3,1),tNext);
+  else
+      return
+  end
+
+end
